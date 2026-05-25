@@ -56,6 +56,7 @@ const REDRAW_MS=60*60_000;                     // territories redrawn hourly
 const ABI=[
   "function roundId() view returns (uint256)",
   "function roundState(uint256) view returns (uint64,uint64,address,address,uint256,uint256,bool,bool)",
+  "function pixelsPlaced(uint256,address) view returns (uint256)",
   "function brushes(uint256,address) view returns (uint64 normalCount,uint64 goldenCount,uint64 firstPurchaseTime)",
   "function settle(uint256 r,address[] players,uint256[] totals,address lastPainter,uint64 lastPixelTime)",
   "function commitArtwork(uint256 r,bytes packed,uint256 totalPixels,uint256 painters)",
@@ -200,8 +201,28 @@ async function syncRound(boot){
   lastPixelMs=Math.max(lastPixelMs,Number(s[1])*1000);
   // at startup, try to restore the saved canvas/ledgers for this exact round.
   // if it restores, keep its territory map; otherwise generate fresh.
-  if(boot && loadState(activeRound)) return;
+  if(boot && loadState(activeRound)) { await floorTalliesToChain(); return; }
   buildTerritories(Math.floor((Date.now()-roundStartMs)/REDRAW_MS));
+  await floorTalliesToChain();
+}
+
+// The contract's settle() rejects any tally lower than what it already recorded
+// ("tally regress"). After a restart/resync our in-memory paidTotal can come back
+// LOWER than what's already on-chain (stale state, a reset, etc.), which would make
+// every settle revert forever and freeze the round. So whenever we (re)sync, read
+// the chain's recorded tally for each known painter and never let our number be
+// below it. Chain truth wins.
+async function floorTalliesToChain(){
+  try{
+    const addrs=new Set([...paidTotal.keys()]);
+    // also include anyone who currently owns a tile (they painted this round)
+    for(const o of ownerOf){ if(o) addrs.add(o); }
+    for(const a of addrs){
+      const onChain=Number(await contract.pixelsPlaced(activeRound,a));
+      if(onChain>(paidTotal.get(a)||0)) paidTotal.set(a,onChain);
+    }
+    if(addrs.size) console.log(`floored tallies to chain for ${addrs.size} painters`);
+  }catch(e){ console.error("floorTalliesToChain:",e.message); }
 }
 async function charges(addr){
   if(!brushCache.has(addr)){
@@ -325,9 +346,18 @@ setInterval(async()=>{
   const players=[...totals.keys()];
   if(players.length){
     try{
-      const tx=await contract.settle(activeRound,players,players.map(p=>totals.get(p)),lastPainter,Math.floor(lastPixelMs/1000));
+      // Final guard: never send a tally below what the chain already has, or
+      // settle() reverts with "tally regress" and the round freezes. Clamp each
+      // total up to the on-chain value if ours somehow drifted lower.
+      const sendTotals=[];
+      for(const p of players){
+        let v=totals.get(p);
+        try{ const oc=Number(await contract.pixelsPlaced(activeRound,p)); if(oc>v){ v=oc; paidTotal.set(p,oc); } }catch{}
+        sendTotals.push(v);
+      }
+      const tx=await contract.settle(activeRound,players,sendTotals,lastPainter,Math.floor(lastPixelMs/1000));
       await tx.wait();
-      const top=[...totals].sort((a,b)=>b[1]-a[1])[0];
+      const top=[...players.map((p,i)=>[p,sendTotals[i]])].sort((a,b)=>b[1]-a[1])[0];
       broadcast({type:"leaderboard",top:top?{addr:top[0],px:top[1]}:null,lastPainter});
       console.log(`settled ${players.length}, last=${lastPainter.slice(0,8)}`);
     }catch(e){ console.error("settle:",e.shortMessage||e.message); }
