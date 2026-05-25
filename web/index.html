@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BRUSHWARS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=DM+Mono:wght@400;500&display=swap');
+:root{--bg:#0c0b10;--panel:#161520;--ink:#f3efe6;--dim:#7a7790;--line:#2a2740;
+--gold:#ffce4a;--acc:#ff4d6d;--acc2:#4dffd0;--grid:#1c1a2b;--danger:#ff4d6d;}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+body{background:radial-gradient(800px 480px at 85% -12%,rgba(255,77,109,.16),transparent 60%),
+radial-gradient(700px 480px at -5% 110%,rgba(77,255,208,.10),transparent 55%),var(--bg);
+color:var(--ink);font-family:'DM Mono',monospace;display:flex;flex-direction:column;min-height:100%;overflow-x:hidden}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-bottom:1px solid var(--line);
+background:rgba(12,11,16,.7);backdrop-filter:blur(10px);position:sticky;top:0;z-index:20}
+.brand{font-family:'Bungee';font-size:26px;letter-spacing:1px}.brand .w{color:var(--acc)}.brand .g{color:var(--gold)}
+.sub{font-size:10px;color:var(--dim);letter-spacing:2px;margin-top:3px}
+.clock{text-align:center;font-family:'Bungee';font-size:18px}.clock small{display:block;font-family:'DM Mono';font-size:9px;color:var(--dim);letter-spacing:2px}
+.clock.warn{color:var(--danger);animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.5}}
+button{font-family:'DM Mono';font-weight:500;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+padding:9px 14px;border-radius:9px;font-size:13px;letter-spacing:.5px;transition:.15s;white-space:nowrap}
+button:hover{border-color:var(--acc);transform:translateY(-1px)}button:disabled{opacity:.35;cursor:not-allowed}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.gold{background:linear-gradient(135deg,var(--gold),#ffb020);border-color:var(--gold);color:#1a1405}
+button.gold:hover{box-shadow:0 0 20px rgba(255,206,74,.45)}.addr{font-size:11px;color:var(--acc2)}
+main{flex:1;display:grid;grid-template-columns:1fr 340px}@media(max-width:900px){main{grid-template-columns:1fr}}
+.stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;min-height:60vh;
+background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:36px 36px}
+@media(max-width:900px){.stage{padding:10px;min-height:auto}}
+.canvasinfo{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;max-width:640px;margin-bottom:10px}
+.canvas-wrap{position:relative;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 28px 70px rgba(0,0,0,.65)}
+canvas{display:block;image-rendering:pixelated;position:absolute;inset:0}
+#base{position:relative;background:#000000}#terr{opacity:.22;pointer-events:none}#fx{pointer-events:none}
+.canvas-wrap.gold{box-shadow:0 0 0 3px var(--gold),0 28px 70px rgba(0,0,0,.65)}
+.modepill{font-size:10px;letter-spacing:1px;padding:5px 9px;border-radius:20px;
+background:rgba(0,0,0,.6);border:1px solid var(--line);z-index:5}.modepill.gold{border-color:var(--gold);color:var(--gold)}
+.lastpill{font-size:10px;letter-spacing:1px;padding:5px 9px;border-radius:20px;
+background:rgba(0,0,0,.6);border:1px solid var(--acc2);color:var(--acc2);z-index:5}
+aside{border-left:1px solid var(--line);background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.card{border:1px solid var(--line);border-radius:11px;padding:13px;background:rgba(255,255,255,.012)}
+.card h3{font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between}
+.prizes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.prize{border:1px solid var(--line);border-radius:10px;padding:11px;text-align:center}
+.prize.nft{border-color:var(--acc2)}.prize.pot{border-color:var(--gold)}
+.prize .lbl{font-size:9px;letter-spacing:1px;color:var(--dim)}.prize .val{font-size:18px;font-family:'Bungee';margin:5px 0 2px}
+.prize.nft .val{color:var(--acc2)}.prize.pot .val{color:var(--gold)}.prize .who{font-size:10px;color:var(--dim)}
+.fundrow{display:flex;gap:8px;margin-top:10px}.fundrow input{flex:1;background:#0c0b10;border:1px solid var(--line);color:var(--ink);padding:8px;border-radius:7px;font-family:'DM Mono';font-size:12px}
+.brushrow{display:flex;align-items:center;gap:9px;margin-bottom:9px}.brushrow .info{flex:1}.brushrow .n{font-size:13px}.brushrow .d{font-size:10px;color:var(--dim)}
+.qty{width:54px;background:#0c0b10;border:1px solid var(--line);color:var(--ink);padding:7px;border-radius:7px;font-family:'DM Mono';font-size:13px;text-align:center}
+.meterhead{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px}.meterhead b{color:var(--acc2)}
+.bar{height:8px;background:#0c0b10;border:1px solid var(--line);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));width:0;transition:width .4s}
+.drip{font-size:10px;color:var(--dim);margin-top:5px}.terr{font-size:10px;color:var(--gold);margin-top:5px}
+.swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:8px}.sw{aspect-ratio:1;border-radius:3px;cursor:pointer;border:2px solid transparent}.sw.active{border-color:var(--ink);transform:scale(1.18);z-index:1}
+.board{display:flex;flex-direction:column;gap:5px;max-height:130px;overflow:auto}
+.row{display:flex;justify-content:space-between;font-size:12px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.02)}
+.row.me{background:rgba(255,77,109,.14);border:1px solid var(--acc)}.row .px{color:var(--gold)}.crown{color:var(--gold)}
+.pollrow{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.02);margin-bottom:5px}
+.pollrow button{padding:4px 8px;font-size:11px}.pollrow .v{color:var(--acc2);font-size:11px;margin-right:6px}
+.polladd{display:flex;gap:6px;margin-top:8px}.polladd input{flex:1;background:#0c0b10;border:1px solid var(--line);color:var(--ink);padding:7px;border-radius:7px;font-family:'DM Mono';font-size:12px}
+.feed{font-size:10px;color:var(--dim);line-height:1.7;max-height:96px;overflow:auto}.feed b{color:var(--acc2)}.feed .gd{color:var(--gold)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--acc);color:var(--ink);padding:11px 17px;border-radius:10px;font-size:13px;z-index:60;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}.toast.err{border-color:var(--danger)}
+.demo{font-size:9px;color:var(--danger);letter-spacing:1px;margin-top:6px}
+.zoomctl{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;
+background:rgba(12,11,16,.8);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:24px;padding:5px 8px;z-index:8}
+.zoomctl button{padding:5px 11px;border-radius:16px;font-size:14px;line-height:1}
+.zoomctl span{font-size:12px;color:var(--dim);min-width:38px;text-align:center}
+.toolrow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.tool{padding:7px 12px;font-size:12px;border-radius:8px}
+.tool.on{background:var(--acc2);border-color:var(--acc2);color:#0c0b10}
+.cur{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);flex-shrink:0}
+.curhex{font-size:12px;color:var(--dim);font-family:'DM Mono'}
+.stage{overflow:hidden}
+.terrlist{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow:auto}
+.trow{display:flex;align-items:center;gap:8px;font-size:11px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.02)}
+.trow.mine{background:rgba(77,255,208,.12);border:1px solid var(--acc2)}
+.tdot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.trow .who{flex:1;color:var(--ink)}
+.trow .st{font-size:9px;letter-spacing:1px;padding:2px 6px;border-radius:10px}
+.st.open{color:var(--dim);border:1px solid var(--line)}
+.st.held{color:#4dffd0;border:1px solid var(--acc2)}
+.st.contested{color:var(--gold);border:1px solid var(--gold)}
+.trow .bn{font-size:10px;color:var(--gold)}
+</style></head>
+<body>
+<header>
+  <div><div class="brand"><span class="w">BRUSH</span><span class="g">WARS</span></div>
+  <div class="sub">MONAD MAINNET · 70/30 SPLIT · 10% POT ROLLOVER · <span id="howLink" style="cursor:pointer;text-decoration:underline">HOW IT WORKS</span></div></div>
+  <div class="clock" id="clock">--:--<small>ROUND ENDS IN</small></div>
+  <div style="display:flex;gap:10px;align-items:center"><span class="addr" id="addr"></span><button class="primary" id="connectBtn">CONNECT</button></div>
+</header>
+<main>
+  <section class="stage">
+    <div class="canvasinfo">
+      <div class="modepill" id="modepill">NORMAL · EMPTY TILES ONLY</div>
+      <div class="lastpill" id="lastpill">LAST: —</div>
+    </div>
+    <div class="canvas-wrap" id="wrap">
+      <canvas id="base" width="64" height="64"></canvas>
+      <canvas id="terr" width="64" height="64"></canvas>
+      <canvas id="fx" width="64" height="64"></canvas>
+    </div>
+    <div class="zoomctl">
+      <button id="zoomOut">−</button>
+      <span id="zoomLbl">1.0×</span>
+      <button id="zoomIn">+</button>
+      <button id="zoomReset">RESET</button>
+    </div>
+  </section>
+  <aside>
+    <div class="card"><h3>Prizes <span id="roundLbl">ROUND 1</span></h3>
+      <div class="prizes">
+        <div class="prize nft"><div class="lbl">NFT · LAST PIXEL</div><div class="val" id="nftHolder">—</div><div class="who">paint last to win</div></div>
+        <div class="prize pot"><div class="lbl">POT · MOST PIXELS</div><div class="val" id="potVal">0 MON</div><div class="who" id="potLeader">no leader</div></div>
+      </div>
+      <div class="fundrow" id="fundRow" style="display:none"><input id="fundAmt" type="number" min="1" value="10" placeholder="MON"/><button class="gold" id="fundBtn">FUND POT</button></div>
+    </div>
+    <div class="card"><h3>Buy Brushes</h3>
+      <div class="brushrow"><div class="info"><div class="n">Normal Brush — 40 MON</div><div class="d">1 px/min · empty only</div></div><input class="qty" id="qN" type="number" min="0" value="3"/><button class="primary" id="buyN">BUY</button></div>
+      <div class="brushrow"><div class="info"><div class="n">Golden Brush — 190 MON</div><div class="d">1 px/min · anywhere · counts</div></div><input class="qty" id="qG" type="number" min="0" value="0"/><button class="gold" id="buyG">BUY</button></div>
+      <div class="demo" id="demoBanner"></div>
+    </div>
+    <div class="card"><h3>Your Charges <span id="bc"></span></h3>
+      <div class="meterhead"><span>ready to place</span><b id="chargeNum">0</b></div>
+      <div class="bar"><i id="chargeBar"></i></div>
+      <div class="drip" id="dripLine">buy a brush to start the drip</div>
+      <div class="terr" id="terrLine"></div>
+      <label style="font-size:11px;color:var(--dim);display:block;margin-top:10px"><input type="checkbox" id="goldToggle"/> use golden (overpaint anywhere)</label>
+      <div class="toolrow">
+        <button id="pipetteBtn" class="tool">PIPETTE</button>
+        <span class="cur" id="curColor"></span>
+        <span class="curhex" id="curHex">#ffffff</span>
+      </div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="card"><h3>Most Pixels</h3><div class="board" id="board"></div></div>
+    <div class="card"><h3>Territories <span id="myTerrCount"></span></h3>
+      <div class="terrlist" id="terrList"></div>
+    </div>
+    <div class="card"><h3>War Room <span>NEXT ROUND THEME</span></h3>
+      <div id="pollList"></div>
+      <div class="polladd"><input id="pollInput" placeholder="propose a theme… (e.g. Monet)"/><button id="pollAdd">ADD</button></div>
+    </div>
+    <div class="card"><h3>Feed</h3><div class="feed" id="feed"></div></div>
+  </aside>
+</main>
+<div class="toast" id="toast"></div>
+<div id="howModal" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)">
+  <div style="max-width:540px;margin:8vh auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;font-size:13px;line-height:1.6;color:var(--ink)">
+    <div style="font-family:'Bungee';font-size:20px;margin-bottom:14px"><span style="color:var(--acc)">HOW</span> <span style="color:var(--gold)">IT WORKS</span></div>
+    <p style="margin-bottom:10px">Buy <b>brushes</b> with MON. Each brush earns 1 pixel per minute (the "drip") until the round ends. Normal brushes paint empty tiles; golden brushes can overpaint anywhere.</p>
+    <p style="margin-bottom:10px">Each round has two prizes: the <b style="color:var(--acc2)">NFT</b> of the finished canvas goes to whoever places the <b>last pixel</b>, and the <b style="color:var(--gold)">pot</b> (30% of all brush sales) goes to whoever places the <b>most pixels</b>. The pot winner takes 90%; 10% rolls into the next round.</p>
+    <p style="margin-bottom:10px;padding:10px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:8px"><b>Trust model (read this):</b> results — who painted, who won — are settled by an <b>operator that we run</b>. The smart contract holds and pays out all funds; the operator cannot withdraw or take your money, only report game outcomes. This is a trusted-operator design, not a fully trustless one. Pots are kept small while the project is young.</p>
+    <p style="font-size:11px;color:var(--dim);margin-bottom:14px">The finished artwork and its attributes are stored fully on-chain. Brush purchases, the pot, and prize payouts are all on-chain and verifiable.</p>
+    <button class="primary" id="howClose" style="width:100%">GOT IT</button>
+  </div>
+</div>
+<script>
+/* BRUSHWARS client — LIVE if window.ethereum + CONFIG.CONTRACT set, else DEMO.
+   Painting is gasless: a click hits the operator (/place), not the chain. Only
+   buyBrushes/seedPot are transactions. Three stacked canvases: base (pixels),
+   terr (territory overlay), fx (last-pixel pulse). */
+const CONFIG={CHAIN_ID_HEX:"0x8f",CHAIN_NAME:"Monad Mainnet",RPC:"https://rpc.monad.xyz",
+EXPLORER:"https://monadexplorer.com",CONTRACT:"0x2Ce16B2244D26Faa8aad1aFc5988d73aa5bba3Da",OPERATOR_API:"https://brushwars-operator-production.up.railway.app",OPERATOR_WS:"wss://brushwars-operator-production.up.railway.app",
+NORMAL_PRICE_MON:"40",GOLDEN_PRICE_MON:"190",GRID:64,
+ADMIN:"0x083a790158E979e45f7395d44cD2E6fd5D6C2571"};
+const PALETTE=["#000000","#222034","#45283c","#663931","#8f563b","#df7126","#d9a066","#eec39a","#fbf236","#99e550","#6abe30","#37946e","#4b692f","#524b24","#323c39","#3f3f74","#306082","#5b6ee1","#639bff","#5fcde4","#cbdbfc","#ffffff","#9badb7","#847e87","#696a6a","#595652","#76428a","#ac3232","#d95763","#d77bba","#8f974a","#8a6f30","#0a0a0a","#3b3b3b","#5c5c5c","#7d7d7d","#a0a0a0","#c4c4c4","#e0e0e0","#f5f5f5","#5a1e0a","#7a2d10","#a83b1e","#cf5a2e","#e88a4d","#f2b079","#f7d2a8","#fce8cf","#1a3a1a","#2d5e2d","#3f8a3f","#5cb85c","#8ad98a","#1a2a4a","#2d4a7a","#3f6aad","#5c8ad9","#8ab0e8","#2a1a3a","#4a2d6a","#6a3f9a","#9a5cc8","#c08ae0","#e0c0f0"];
+const TERR_COLORS=["#000000","#ff4d6d","#4dffd0","#ffce4a","#7c5cff","#4d9fff","#ff9f4d","#4dff6b","#ff4dff","#9f9f9f"];
+const EMPTY="empty",G=CONFIG.GRID;   // sentinel, never a palette color; canvas bg is black via CSS
+const BG="#000000";                  // visual background (also palette index 0)
+let pipette=false;                     // eyedropper mode toggle
+const base=document.getElementById("base").getContext("2d");
+const terrC=document.getElementById("terr").getContext("2d");
+const fx=document.getElementById("fx").getContext("2d");
+const tiles=new Array(G*G).fill(EMPTY); let terrMap=new Array(G*G).fill(0);
+const board={}; let nftHolder=null, potMon=0;
+let account=null,live=false,selected=PALETTE[21];   // default #ffffff (visible on black bg)
+let bN=0,bG=0,firstBuy=0,placed=0;
+let roundStart=Date.now(),lastPixel=Date.now();
+
+base.fillStyle=BG;base.fillRect(0,0,G,G);
+function fit(){
+  // On wide screens the 340px sidebar sits beside the canvas; on narrow screens
+  // (<=900px) it stacks below, so the canvas gets the full width. Size to fit the
+  // available width minus padding, and keep it square. No fixed floor that could
+  // overflow a phone screen.
+  const stacked = innerWidth <= 900;
+  const avail = stacked ? innerWidth - 36 : innerWidth - 380;
+  // largest multiple of G (64) that fits, clamped to a sensible range
+  let s = Math.floor(Math.min(avail, innerHeight - 140) / G) * G;
+  s = Math.max(G*4, Math.min(640, s));        // never below 256px, never above 640px
+  if (stacked) s = Math.min(s, innerWidth - 24); // hard cap to viewport on mobile
+  ["base","terr","fx"].forEach(id=>{const e=document.getElementById(id);e.style.width=s+"px";e.style.height=s+"px";});
+  const w=document.getElementById("wrap"); w.style.width=s+"px"; w.style.height=s+"px";
+}
+addEventListener("resize",fit);fit();
+
+// ---- zoom + pan ----
+let zoom=1, panX=0, panY=0;
+const wrap=document.getElementById("wrap");
+function applyZoom(){wrap.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;wrap.style.transformOrigin="center center";
+document.getElementById("zoomLbl").textContent=zoom.toFixed(1)+"×";}
+function setZoom(z){zoom=Math.max(1,Math.min(12,z));if(zoom===1){panX=0;panY=0;}applyZoom();}
+document.getElementById("zoomIn").onclick=()=>setZoom(zoom+0.5);
+document.getElementById("zoomOut").onclick=()=>setZoom(zoom-0.5);
+document.getElementById("zoomReset").onclick=()=>{setZoom(1);};
+// scroll to zoom toward the cursor
+document.querySelector(".stage").addEventListener("wheel",e=>{e.preventDefault();
+const before=zoom;setZoom(zoom*(e.deltaY<0?1.15:0.87));
+// keep roughly centered on cursor by nudging pan proportionally
+if(zoom!==before&&zoom>1){const r=wrap.getBoundingClientRect();const dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+panX-=dx*(zoom/before-1)*0.4;panY-=dy*(zoom/before-1)*0.4;applyZoom();}},{passive:false});
+// drag to pan when zoomed in (and suppress the paint-click that follows a drag)
+let dragging=false,dragMoved=false,sx=0,sy=0,spanX=0,spanY=0;
+const stageEl=document.querySelector(".stage");
+stageEl.addEventListener("mousedown",e=>{if(zoom<=1)return;dragging=true;dragMoved=false;sx=e.clientX;sy=e.clientY;spanX=panX;spanY=panY;});
+addEventListener("mousemove",e=>{if(!dragging)return;const dx=e.clientX-sx,dy=e.clientY-sy;
+if(Math.abs(dx)>3||Math.abs(dy)>3)dragMoved=true;panX=spanX+dx;panY=spanY+dy;applyZoom();});
+addEventListener("mouseup",()=>{dragging=false;setTimeout(()=>dragMoved=false,0);});
+
+const sw=document.getElementById("swatches");
+function setColor(c){selected=c;[...sw.children].forEach(x=>x.classList.toggle("active",x.dataset.c===c));
+document.getElementById("curColor").style.background=c;document.getElementById("curHex").textContent=c;}
+PALETTE.forEach(c=>{const d=document.createElement("div");d.className="sw";d.style.background=c;d.dataset.c=c;
+d.title=c;d.onclick=()=>setColor(c);sw.appendChild(d);});
+setColor(selected);
+
+// ---- pipette (eyedropper): pick the color of an existing pixel ----
+const pipetteBtn=document.getElementById("pipetteBtn");
+pipetteBtn.onclick=()=>{pipette=!pipette;pipetteBtn.classList.toggle("on",pipette);
+document.getElementById("fx").style.cursor=pipette?"copy":"";
+toast(pipette?"pipette on — click a pixel to grab its color":"pipette off");};
+
+function toast(m,e){const t=document.getElementById("toast");t.textContent=m;t.className="toast show"+(e?" err":"");clearTimeout(t._h);t._h=setTimeout(()=>t.className="toast",2500);}
+function feed(h){const l=document.getElementById("feed");const d=document.createElement("div");d.innerHTML=h;l.prepend(d);while(l.children.length>40)l.removeChild(l.lastChild);}
+function short(a){return !a?"—":a.startsWith("0xDEMO")?"YOU":a.slice(0,6)+"…"+a.slice(-4);}
+function goldMode(){return document.getElementById("goldToggle").checked;}
+
+let terrStatus=[];   // [{t,state,holder,paidHere,gate,bonus,cap,earning}]
+
+// territory centroids (for placing labels) computed from the current map
+function terrCentroids(){
+  const sx={},sy={},n={};
+  for(let i=0;i<terrMap.length;i++){const t=terrMap[i];if(!t)continue;
+    sx[t]=(sx[t]||0)+(i%G);sy[t]=(sy[t]||0)+Math.floor(i/G);n[t]=(n[t]||0)+1;}
+  const c={};for(const t in n)c[t]={x:sx[t]/n[t],y:sy[t]/n[t]};return c;
+}
+
+function drawTerritories(){
+  terrC.clearRect(0,0,G,G);
+  const stByT={}; terrStatus.forEach(s=>stByT[s.t]=s);
+  for(let i=0;i<terrMap.length;i++){
+    const t=terrMap[i];if(t===0)continue;
+    const col=TERR_COLORS[t%TERR_COLORS.length];
+    const st=stByT[t];
+    let alpha=0.13;                       // open = faint
+    if(st){ if(st.state==="held")alpha=0.5; else if(st.state==="contested")alpha=0.28; }
+    terrC.globalAlpha=alpha; terrC.fillStyle=col;
+    terrC.fillRect(i%G,Math.floor(i/G),1,1);
+    // contested = add a sparse stripe so it reads as "fighting"
+    if(st&&st.state==="contested"&&((i%G)+Math.floor(i/G))%4===0){
+      terrC.globalAlpha=0.5; terrC.fillStyle=col; terrC.fillRect(i%G,Math.floor(i/G),1,1);
+    }
+  }
+  terrC.globalAlpha=1;
+}
+
+// territory holder names are shown in the sidebar list (renderTerrList), not on
+// the canvas, so the pixels stay unobstructed.
+
+// sidebar list of all territories with state + bonus progress
+function renderTerrList(){
+  const el=document.getElementById("terrList");if(!el)return;el.innerHTML="";
+  if(!terrStatus.length){el.innerHTML='<div class="trow"><span class="who" style="color:var(--dim)">waiting for territory data…</span></div>';return;}
+  let mine=0;
+  terrStatus.forEach(s=>{
+    const isMine=account&&s.holder&&s.holder.toLowerCase()===account.toLowerCase();
+    if(isMine)mine++;
+    const col=TERR_COLORS[s.t%TERR_COLORS.length];
+    const who=s.state==="open"?"unclaimed":s.state==="contested"?"contested":short(s.holder);
+    let extra="";
+    if(s.state==="held"){
+      if(s.paidHere<s.gate)extra=`<span class="bn">${s.paidHere}/${s.gate} to unlock</span>`;
+      else extra=`<span class="bn">bonus ${s.bonus}/${s.cap}</span>`;
+    }
+    const row=document.createElement("div");row.className="trow"+(isMine?" mine":"");
+    row.innerHTML=`<span class="tdot" style="background:${col}"></span>
+      <span class="who">${isMine?"YOU":who}</span>
+      ${extra}
+      <span class="st ${s.state}">${s.state.toUpperCase()}</span>`;
+    el.appendChild(row);
+  });
+  document.getElementById("myTerrCount").textContent = mine?`${mine} held`:"";
+  // bonus cue near the charge meter
+  const earning = terrStatus.filter(s=>account&&s.holder&&s.holder.toLowerCase()===account.toLowerCase()&&s.earning).length;
+  const tl=document.getElementById("terrLine");
+  if(tl) tl.textContent = earning?`+${earning} bonus px/min from your territories`:"";
+}
+// charges come from the OPERATOR (chain-derived), polled regularly, so they
+// survive page reloads and match what the server will accept. opChances holds
+// the latest server value; we use it whenever live.
+let opCharges=0, opGolden=0;
+async function pollCharges(){
+  if(!account||!CONFIG.OPERATOR_API){return;}
+  try{ const r=await fetch(`${CONFIG.OPERATOR_API}/charges/${account}`); if(!r.ok)return;
+    const d=await r.json(); opCharges=d.charges||0; opGolden=d.golden||0; refreshCharges(); }
+  catch(e){}
+}
+async function syncPot(){
+  if(!CONFIG.OPERATOR_API){return;}
+  try{ const r=await fetch(`${CONFIG.OPERATOR_API}/canvas`); if(!r.ok)return;
+    const d=await r.json();
+    if(d.potWei!==undefined){ potMon=Number(BigInt(d.potWei))/1e18; potFromChain=true;
+      lastLocalSpentMon=bN*Number(CONFIG.NORMAL_PRICE_MON)+bG*Number(CONFIG.GOLDEN_PRICE_MON); refreshPrizes(); } }
+  catch(e){}
+}
+function availableCharges(){
+  // live: trust the operator. demo: fall back to the local drip estimate.
+  if(live) return opCharges;
+  if(!firstBuy)return 0;const m=Math.floor((Date.now()-firstBuy)/60000);return Math.max(0,m*(bN+bG)-placed);
+}
+function refreshCharges(){const c=availableCharges(),tot=bN+bG;
+document.getElementById("chargeNum").textContent=c;document.getElementById("chargeBar").style.width=(c?100:0)+"%";
+document.getElementById("bc").textContent=tot?`${bN} normal · ${bG} golden`:"";
+document.getElementById("dripLine").textContent = c>0 ? `${c} ready · +1/min per brush`
+  : (tot||live ? "charging… +1/min per brush (wait for the drip)" : "buy a brush to start the drip");}
+function refreshPrizes(){document.getElementById("nftHolder").textContent=short(nftHolder);
+document.getElementById("potVal").textContent=potMon.toLocaleString(undefined,{maximumFractionDigits:2})+" MON";
+const top=Object.entries(board).sort((a,b)=>b[1]-a[1])[0];
+document.getElementById("potLeader").textContent=top?`${short(top[0])} · ${top[1]}px`:"no leader";}
+function renderBoard(){const el=document.getElementById("board");const e=Object.entries(board).sort((a,b)=>b[1]-a[1]).slice(0,10);el.innerHTML="";
+e.forEach(([a,p],i)=>{const r=document.createElement("div");r.className="row"+(a===account?" me":"");r.innerHTML=`<span>${i===0?'':''}${short(a)}</span><span class="px">${p}px</span>`;el.appendChild(r);});
+if(!e.length)el.innerHTML='<div class="row"><span>no pixels yet</span><span class="px">—</span></div>';}
+
+document.getElementById("goldToggle").onchange=()=>{const g=goldMode();
+document.getElementById("wrap").className="canvas-wrap"+(g?" gold":"");
+const p=document.getElementById("modepill");p.className="modepill"+(g?" gold":"");p.textContent=g?"GOLDEN · PAINT ANYWHERE":"NORMAL · EMPTY TILES ONLY";};
+
+// ---- wallet ----
+const connectBtn=document.getElementById("connectBtn");
+connectBtn.onclick=async()=>{
+if(!window.ethereum){account="0xDEMO"+Math.random().toString(16).slice(2,38).padEnd(36,"0");live=false;
+document.getElementById("demoBanner").textContent="DEMO MODE · no wallet · simulated";onConnected();return;}
+try{const a=await ethereum.request({method:"eth_requestAccounts"});account=a[0];await ensureChain();
+live=!!CONFIG.CONTRACT;document.getElementById("demoBanner").textContent=live?"":"CONTRACT not set · demo";onConnected();}
+catch(e){toast(e.message||"rejected",true);}};
+async function ensureChain(){const c=await ethereum.request({method:"eth_chainId"});if(c===CONFIG.CHAIN_ID_HEX)return;
+try{await ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CONFIG.CHAIN_ID_HEX}]});}
+catch(e){if(e.code===4902){await ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CONFIG.CHAIN_ID_HEX,chainName:CONFIG.CHAIN_NAME,nativeCurrency:{name:"Monad",symbol:"MON",decimals:18},rpcUrls:[CONFIG.RPC],blockExplorerUrls:[CONFIG.EXPLORER]}]});}else throw e;}}
+function onConnected(){connectBtn.style.display="none";document.getElementById("addr").textContent=short(account)+(live?" · LIVE":" · DEMO");
+const isAdmin=account&&CONFIG.ADMIN&&account.toLowerCase()===CONFIG.ADMIN.toLowerCase();
+document.getElementById("fundRow").style.display=isAdmin?"flex":"none";
+board[account]=board[account]||0;renderBoard();refreshPrizes();refreshCharges();feed(`<b>connected</b> ${short(account)}`);
+if(live){pollCharges();restoreState();}}
+
+// rebuild canvas/board/territories from the operator after connect or reload
+async function restoreState(){
+  if(!CONFIG.OPERATOR_API)return;
+  try{
+    const r=await fetch(CONFIG.OPERATOR_API+"/canvas");if(!r.ok)return;const d=await r.json();
+    if(d.pixels){for(let i=0;i<d.pixels.length;i++){const c=d.pixels[i];if(c&&c!==EMPTY){base.fillStyle=c;base.fillRect(i%G,Math.floor(i/G),1,1);tiles[i]=c;}}}
+    if(d.territory){terrMap=d.territory;}
+    if(d.status){terrStatus=d.status;}
+    drawTerritories();renderTerrList();
+    if(d.board){Object.keys(board).forEach(k=>delete board[k]);d.board.forEach(e=>board[e.addr]=e.px);renderBoard();refreshPrizes();}
+    if(d.lastPainter&&d.lastPainter!=="0x0000000000000000000000000000000000000000"){
+      nftHolder=d.lastPainter;document.getElementById("lastpill").textContent="LAST: "+short(d.lastPainter);}
+    // restore the round timer from the operator's authoritative times
+    if(d.roundStartMs) roundStart=d.roundStartMs;
+    if(d.lastPixelMs)  lastPixel=d.lastPixelMs;
+    if(typeof d.hasPainted==="boolean") hasPainted=d.hasPainted;
+    // restore the REAL on-chain pot (the source of truth), not a local estimate
+    if(d.potWei!==undefined){
+      potMon=Number(BigInt(d.potWei))/1e18;
+      potFromChain=true; refreshPrizes();
+    }
+    refreshClock();
+  }catch(e){}
+}
+let potFromChain=false;
+
+// ---- buy brushes / fund pot ----
+function potBump(){
+  // optimistic: add this purchase's 30% (in MON) to whatever the chain last
+  // reported, so the pot ticks up instantly. The periodic chain re-sync corrects it.
+  const spentMon=bN*Number(CONFIG.NORMAL_PRICE_MON)+bG*Number(CONFIG.GOLDEN_PRICE_MON);
+  if(potFromChain){ potMon += (spentMon-lastLocalSpentMon)*0.30; lastLocalSpentMon=spentMon; }
+  else { potMon=spentMon*0.30+seedMon; }
+  refreshPrizes();
+}
+let seedMon=0, lastLocalSpentMon=0;
+async function buy(kind){if(!account){toast("connect first",true);return;}
+const n=kind==="n"?Math.floor(+document.getElementById("qN").value||0):0;
+const g=kind==="g"?Math.floor(+document.getElementById("qG").value||0):0;
+if(n<1&&g<1){toast("enter a quantity",true);return;}
+if(live){try{const np=BigInt(Math.round(parseFloat(CONFIG.NORMAL_PRICE_MON)*1e6))*(10n**12n),gp=BigInt(Math.round(parseFloat(CONFIG.GOLDEN_PRICE_MON)*1e6))*(10n**12n);
+const value=np*BigInt(n)+gp*BigInt(g);
+const SELECTOR="0x67189737"; // buyBrushes(uint64,uint64)
+const data=SELECTOR+n.toString(16).padStart(64,"0")+g.toString(16).padStart(64,"0");
+const tx=await ethereum.request({method:"eth_sendTransaction",params:[{from:account,to:CONFIG.CONTRACT,value:"0x"+value.toString(16),data}]});
+feed(`bought ${n} normal, ${g} golden · tx ${tx.slice(0,8)}`);}catch(e){toast(e.message||"tx failed",true);return;}}
+else toast(`+${n} normal, ${g} golden (demo)`);
+if(!firstBuy)firstBuy=Date.now();bN+=n;bG+=g;potBump();refreshCharges();
+feed(`brushes +${n} normal, +${g} golden`);}
+document.getElementById("buyN").onclick=()=>buy("n");
+document.getElementById("buyG").onclick=()=>buy("g");
+document.getElementById("fundBtn").onclick=async()=>{if(!account){toast("connect first",true);return;}
+const mon=Math.floor(+document.getElementById("fundAmt").value||0);if(mon<1){toast("min 1 MON",true);return;}
+if(live){try{const wei=BigInt(Math.round(mon*1e6))*(10n**12n);
+const tx=await ethereum.request({method:"eth_sendTransaction",params:[{from:account,to:CONFIG.CONTRACT,value:"0x"+wei.toString(16),data:"0xdf804903"/* seedPot() */}]});
+feed(`<span class="gd">funded pot</span> ${mon} MON · tx ${tx.slice(0,8)}…`);}catch(e){toast(e.message||"tx failed",true);return;}}
+else toast(`pot +${mon} MON (demo)`);
+seedMon+=mon;potBump();};
+
+// ---- paint (gasless) ----
+function flashLast(x,y){fx.clearRect(0,0,G,G);fx.strokeStyle="#4dffd0";fx.lineWidth=0.6;fx.strokeRect(x+0.3,y+0.3,0.4,0.4);
+let a=1;const iv=setInterval(()=>{a-=0.08;fx.clearRect(0,0,G,G);if(a<=0){clearInterval(iv);return;}fx.globalAlpha=a;fx.strokeStyle="#4dffd0";fx.strokeRect(x,y,1,1);fx.globalAlpha=1;},40);}
+document.getElementById("base").parentElement.addEventListener("click",e=>{
+if(dragMoved)return; // this click was the end of a pan drag, not a paint
+const r0=document.getElementById("fx").getBoundingClientRect();
+const px=Math.floor((e.clientX-r0.left)/r0.width*G),py=Math.floor((e.clientY-r0.top)/r0.height*G);
+// pipette mode: grab the clicked pixel's color into the active slot
+if(pipette){
+  const c=tiles[py*G+px];
+  if(c&&c!==EMPTY){ if(PALETTE.includes(c)) setColor(c); else toast("that pixel isn't a palette color",true); }
+  else toast("empty pixel — nothing to pick",true);
+  pipette=false;pipetteBtn.classList.remove("on");document.getElementById("fx").style.cursor="";
+  return;
+}
+if(!account){toast("connect first",true);return;}
+if(availableCharges()<1){toast("no charges — wait for the drip",true);return;}
+const x=px,y=py,idx=y*G+x;
+const occupied=tiles[idx]!==EMPTY,gold=goldMode();
+if(occupied&&!gold){toast("occupied — switch to golden to overpaint",true);return;}
+if(gold&&bG<1){toast("no golden brushes",true);return;}
+base.fillStyle=selected;base.fillRect(x,y,1,1);tiles[idx]=selected;flashLast(x,y);
+placed++;board[account]=(board[account]||0)+1;nftHolder=account;lastPixel=Date.now();hasPainted=true;
+if(live){opCharges=Math.max(0,opCharges-1);if(gold)opGolden=Math.max(0,opGolden-1);} // instant feedback; server is source of truth
+document.getElementById("lastpill").textContent="LAST: "+short(account);
+refreshCharges();renderBoard();refreshPrizes();
+if(occupied&&gold)feed(`<span class="gd">overpaint</span> by ${short(account)}`);
+if(live&&CONFIG.OPERATOR_API)fetch(CONFIG.OPERATOR_API+"/place",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({addr:account,x,y,color:selected,gold})}).catch(()=>{});});
+
+// ---- poll ----
+const pollVotes={}; let myVote=null;
+function renderPoll(){const el=document.getElementById("pollList");const e=Object.entries(pollVotes).sort((a,b)=>b[1]-a[1]);el.innerHTML="";
+if(!e.length){el.innerHTML='<div class="pollrow"><span style="color:var(--dim)">no themes yet — propose one</span></div>';return;}
+e.forEach(([idea,v])=>{const r=document.createElement("div");r.className="pollrow";
+r.innerHTML=`<span>${idea}</span><span><span class="v">${v}</span><button data-i="${idea}">${myVote===idea?"":"VOTE"}</button></span>`;el.appendChild(r);});
+el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const i=b.dataset.i;if(myVote&&pollVotes[myVote])pollVotes[myVote]--;myVote=i;pollVotes[i]++;renderPoll();
+if(live&&CONFIG.OPERATOR_API)fetch(CONFIG.OPERATOR_API+"/poll/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({addr:account,idea:i})}).catch(()=>{});});}
+document.getElementById("pollAdd").onclick=()=>{const v=document.getElementById("pollInput").value.trim();if(!v)return;
+if(!(v in pollVotes))pollVotes[v]=0;document.getElementById("pollInput").value="";renderPoll();
+if(live&&CONFIG.OPERATOR_API)fetch(CONFIG.OPERATOR_API+"/poll/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idea:v})}).catch(()=>{});};
+
+// ---- clock ----
+let hasPainted=false;          // inactivity timer only runs after first pixel
+let intermissionEnd=0;         // >0 during the 2-min gap between rounds
+const INTERMISSION_MS=2*60000;
+
+function refreshClock(){
+  const el=document.getElementById("clock");
+  const now=Date.now();
+
+  // intermission between rounds
+  if(intermissionEnd>now){
+    const ms=intermissionEnd-now,m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000);
+    const top=Object.entries(pollVotes).sort((a,b)=>b[1]-a[1])[0];
+    el.innerHTML=`${m}:${String(s).padStart(2,"0")}<small>NEXT ROUND${top?" · "+top[0].toUpperCase():""}</small>`;
+    el.className="clock warn";return;
+  }
+
+  const capEnd=roundStart+12*60*60000;       // 12h hard cap (matches contract HARD_CAP)
+  const inactEnd=lastPixel+30*60000;         // 30m inactivity (matches contract INACTIVITY_WINDOW)
+  // before the first pixel, only the hard cap counts down
+  const end=hasPainted?Math.min(capEnd,inactEnd):capEnd;
+  let ms=Math.max(0,end-now);
+  const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);
+  const txt=h>0?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${m}:${String(s).padStart(2,"0")}`;
+  const label = !hasPainted ? "WAITING FOR FIRST PIXEL" : (end===capEnd?"HARD CAP":"INACTIVITY");
+  el.innerHTML = ms===0 ? `CLOSED<small>ROUND OVER</small>` : `${txt}<small>${label} · ENDS IN</small>`;
+  el.className="clock"+(hasPainted&&ms<120000?" warn":"");
+}
+
+// ---- websocket live feed (LIVE mode) ----
+function connectWS(){if(!CONFIG.OPERATOR_WS)return;try{const ws=new WebSocket(CONFIG.OPERATOR_WS);
+ws.onmessage=ev=>{const d=JSON.parse(ev.data);
+if(d.type==="pixel"){base.fillStyle=d.color;base.fillRect(d.x,d.y,1,1);tiles[d.y*G+d.x]=d.color;lastPixel=Date.now();hasPainted=true;if(d.last){flashLast(d.x,d.y);nftHolder=d.addr;document.getElementById("lastpill").textContent="LAST: "+short(d.addr);}}
+else if(d.type==="territories"){terrMap=d.map;drawTerritories();feed(`<span class="gd">territories redrawn</span>`);}
+else if(d.type==="territoryStatus"){terrStatus=d.status;drawTerritories();renderTerrList();}
+else if(d.type==="leaderboard"&&d.top){board[d.top.addr]=d.top.px;renderBoard();refreshPrizes();}
+else if(d.type==="poll"){Object.keys(pollVotes).forEach(k=>delete pollVotes[k]);d.ideas.forEach(i=>pollVotes[i.idea]=i.votes);renderPoll();}
+else if(d.type==="closed"){feed(`<b>round ${d.round} closed</b> · NFT to ${short(d.nft)}`);toast("round closed — next round in 2:00");
+// if YOU won the pot, offer to claim it
+if(d.potWinner&&account&&d.potWinner.toLowerCase()===account.toLowerCase()){
+  feed(`<span class="gd">you won the pot!</span> claiming…`);
+  claimPot(d.round);
+}
+if(d.nft&&account&&d.nft.toLowerCase()===account.toLowerCase()){
+  feed(`<span class="gd">you won the NFT</span> — BrushWars Canvas #${d.round}`);
+}
+intermissionEnd=Date.now()+INTERMISSION_MS;
+setTimeout(()=>{
+  tiles.fill(EMPTY);base.fillStyle=BG;base.fillRect(0,0,G,G);
+  Object.keys(board).forEach(k=>delete board[k]);
+  placed=0;bN=0;bG=0;firstBuy=0;hasPainted=false;nftHolder=null;
+  roundStart=Date.now();lastPixel=Date.now();intermissionEnd=0;
+  document.getElementById("lastpill").textContent="LAST: —";
+  renderBoard();refreshPrizes();refreshCharges();
+  feed(`<b>new round started</b>`);
+},INTERMISSION_MS);}};}catch(e){}}
+
+// claim the pot as the winner (calls claimPot on the contract)
+async function claimPot(round){
+  if(!live||!window.ethereum){return;}
+  try{
+    const data=CLAIM_POT_SELECTOR + round.toString(16).padStart(64,"0");
+    const tx=await ethereum.request({method:"eth_sendTransaction",params:[{from:account,to:CONFIG.CONTRACT,data}]});
+    feed(`<span class="gd">pot claimed</span> · tx ${tx.slice(0,8)}`);toast("pot claimed to your wallet");
+  }catch(e){toast(e.message||"claim failed",true);}
+}
+const CLAIM_POT_SELECTOR="0x66a47f63"; // keccak256("claimPot(uint256)")[:4]
+
+// ---- initial render (no demo data; real state arrives from the operator) ----
+function placeholderTerritories(){const seeds=[];for(let i=0;i<9;i++)seeds.push({x:Math.random()*G,y:Math.random()*G,id:i+1});
+for(let y=0;y<G;y++)for(let x=0;x<G;x++){const idx=y*G+x;if(Math.hypot(x-G/2,y-G/2)<9){terrMap[idx]=0;continue;}
+let best=1e9,id=0;for(const s of seeds){const d=Math.hypot(x-s.x,y-s.y);if(d<best){best=d;id=s.id;}}terrMap[idx]=id;}drawTerritories();}
+placeholderTerritories();renderBoard();refreshPrizes();refreshCharges();renderPoll();renderTerrList();
+// restore the live board/territories/timer from the operator immediately on load,
+// regardless of wallet connection — this is public state and must survive refresh.
+if(CONFIG.OPERATOR_API) restoreState();
+setInterval(()=>{refreshClock();refreshCharges();},1000);
+document.getElementById("howLink").onclick=()=>document.getElementById("howModal").style.display="block";
+document.getElementById("howClose").onclick=()=>document.getElementById("howModal").style.display="none";
+document.getElementById("howModal").onclick=e=>{if(e.target.id==="howModal")document.getElementById("howModal").style.display="none";};
+setInterval(()=>{if(live){pollCharges();syncPot();}},5000);   // keep charges + pot in sync
+refreshClock();connectWS();
+</script></body></html>

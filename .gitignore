@@ -1,0 +1,10 @@
+.env
+*.env
+**/state.json
+node_modules/
+**/node_modules/
+out/
+cache/
+broadcast/**/dry-run/
+.DS_Store
+Thumbs.db
